@@ -29,8 +29,8 @@ def base_camera(data):
     v_up = data.camera.up_vector      # direção "para cima" do mundo
 
     w = (C - M).normalizar()                  # eixo Z da câmera (para trás)
-    u = v_up.prodVetorial(w).normalizar()     # eixo X (direita)
-    v = w.prodVetorial(u)                     # eixo Y (cima) — já ortogonal, não precisa normalizar de novo
+    u = w.prodVetorial(v_up).normalizar()     # eixo X (direita)  —  w × up garante que +X do mundo caia à direita da imagem nesta convenção de cena
+    v = u.prodVetorial(w)                     # eixo Y (cima) — já ortogonal, não precisa normalizar de novo
 
     return C, u, v, w
 
