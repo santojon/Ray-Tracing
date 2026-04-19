@@ -1,0 +1,56 @@
+{
+  "globalLight": [0.3, 0.3, 0.3],
+
+  "materials": {
+    "azul": {
+      "color": [0.0, 0.1, 1.0]
+    },
+    "vermelho": {
+      "color": [1.0, 0.0, 0.1]
+    },
+    "chao": {
+      "color": [0.70, 0.3, 0.1]
+    }
+  },
+
+  "camera": {
+    "lookfrom": [120, 120, -200],
+    "lookat": [68, 90, 0],
+    "vup": [1, 1, 0],
+    "image_width": 600,
+    "image_height": 600,
+    "screen_distance": 0.75
+  },
+
+  "lights": [
+    {
+      "name": "Luz do Teto",
+      "position": [278, 548, -278],
+      "color": [1.0, 1.0, 1.0]
+    }
+  ],
+
+  "objects": [
+    {
+      "name": "Chão",
+      "type": "plane",
+      "point_on_plane": [0, 0, 0],
+      "normal": [0, 1, 0],
+      "material": "chao"
+    },
+    {
+      "name": "Esfera azul",
+      "type": "sphere",
+      "center": [0, 100, 0],
+      "radius": 90,
+      "material": "azul"
+    },
+    {
+      "name": "Esfera vermelha",
+      "type": "sphere",
+      "center": [100, 90, -500],
+      "radius": 50,
+      "material": "vermelho"
+    }
+  ]
+}

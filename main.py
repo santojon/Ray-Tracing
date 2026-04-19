@@ -8,71 +8,59 @@ from src.Plano import Plano
 from utils.Scene.sceneParser import SceneJsonLoader
 
 
-# ---------------------------------------------------------------------------
-# Base ortonormal da câmera
-# ---------------------------------------------------------------------------
-
 def base_camera(data):
-    """
-    Constrói os três eixos do sistema de coordenadas da câmera.
+    """Constrói a base ortonormal da câmera: três eixos perpendiculares entre si.
 
-    w  aponta para TRÁS (de M em direção a C) — eixo de profundidade
-    u  aponta para a DIREITA — produto vetorial de up com w
-    v  aponta para CIMA     — produto vetorial de w com u
+    w  aponta para TRÁS (de M em direção a C) — eixo de profundidade.
+    u  aponta para a DIREITA — calculado como w × up.
+    v  aponta para CIMA     — calculado como u × w.
 
-    Por que normalizar? Precisamos de uma base ortonormal: vetores com
-    comprimento 1 para que o mapeamento de pixel → ponto na tela seja
-    uniforme, sem distorção de escala.
-    """
-    C    = data.camera.lookfrom       # posição da câmera
-    M    = data.camera.lookat         # alvo (centro da tela)
-    v_up = data.camera.up_vector      # direção "para cima" do mundo
+    A ordem w × up (e não up × w) é necessária porque a cena usa a convenção
+    de que +X no mundo equivale à direita da imagem. Com up × w o eixo u ficaria
+    apontando para -X e a imagem sairia espelhada horizontalmente.
 
-    w = (C - M).normalizar()                  # eixo Z da câmera (para trás)
-    u = w.prodVetorial(v_up).normalizar()     # eixo X (direita)  —  w × up garante que +X do mundo caia à direita da imagem nesta convenção de cena
-    v = u.prodVetorial(w)                     # eixo Y (cima) — já ortogonal, não precisa normalizar de novo
+    Os vetores são normalizados para formar uma base ortonormal: comprimento 1
+    garante que o parâmetro t das interseções corresponda à distância real."""
+    C    = data.camera.lookfrom       # posição da câmera no mundo
+    M    = data.camera.lookat         # ponto para onde a câmera aponta
+    v_up = data.camera.up_vector      # vetor "para cima" do mundo (geralmente Y)
+
+    w = (C - M).normalizar()                  # eixo de profundidade (aponta para trás)
+    u = w.prodVetorial(v_up).normalizar()     # eixo horizontal (aponta para a direita)
+    v = u.prodVetorial(w)                     # eixo vertical (aponta para cima)
 
     return C, u, v, w
 
 
-# ---------------------------------------------------------------------------
-# Geração do raio para o pixel (i, j)
-# ---------------------------------------------------------------------------
-
 def gerar_raio(i, j, C, u, v, w, largura, altura, d):
-    """
-    Modelo de câmera pinhole:
+    """Gera o raio que passa pelo centro do pixel (i, j).
 
-      - O centro da tela está a 'd' unidades à frente da câmera: C - w*d
-      - Cada pixel é mapeado para coordenadas NDC em [-1, 1] (height) e
-        [-aspect, +aspect] (width), para preservar proporções.
-      - O raio parte de C e aponta para o ponto correspondente na tela.
+    Usa o modelo de câmera pinhole: a tela fica a d unidades à frente
+    da câmera (C - w*d) e cada pixel é mapeado para coordenadas NDC.
 
-    NDC (Normalized Device Coordinates):
-        px ∈ [-aspect, +aspect]   →  esquerda/direita
-        py ∈ [-1, +1]             →  baixo/cima
+    NDC (Normalized Device Coordinates): índices de pixel são convertidos
+    para o intervalo [-aspect, +aspect] no eixo horizontal e [-1, +1] no
+    vertical, com (0, 0) no centro exato da imagem.
 
-    Por que subtrair 0.5 de (i+0.5)?
-        Queremos o centro do pixel, não a borda.
-    """
+    O +0.5 nos índices faz o raio passar pelo centro do pixel, não pelo canto.
+    Multiplicar px pela razão de aspecto evita que objetos circulares apareçam
+    como elipses em imagens não quadradas."""
     aspect = largura / altura
 
-    px = (2 * (i + 0.5) / largura  - 1) * aspect   # coordenada horizontal
-    py =  1 - 2 * (j + 0.5) / altura               # coordenada vertical (j=0 → topo)
+    px = (2 * (i + 0.5) / largura  - 1) * aspect   # coordenada horizontal NDC
+    py =  1 - 2 * (j + 0.5) / altura               # coordenada vertical NDC (j=0 é o topo)
 
-    # Direção = ponto na tela  -  câmera
-    # Ponto na tela = C  -  w*d  +  u*px  +  v*py
-    # Portanto: direção = -w*d + u*px + v*py  (sem C, pois se cancela)
+    # O ponto na tela é C - w*d + u*px + v*py. O vetor direção é esse ponto menos C,
+    # o que cancela C e deixa só -w*d + u*px + v*py.
     direcao = ((-w) * d + u * px + v * py).normalizar()
 
     return Raio(C, direcao)
 
 
-# ---------------------------------------------------------------------------
-# Cria os objetos da cena a partir dos dados carregados do JSON
-# ---------------------------------------------------------------------------
-
 def criar_objetos(scene):
+    """Converte os dados carregados do JSON em objetos de cena concretos.
+    Itera sobre scene.objects e instancia Esfera ou Plano conforme o tipo,
+    passando centro/ponto, dimensões e material de cada um."""
     objetos = []
     for obj in scene.objects:
         if obj.obj_type == "sphere":
@@ -88,11 +76,15 @@ def criar_objetos(scene):
     return objetos
 
 
-# ---------------------------------------------------------------------------
-# Renderizador principal
-# ---------------------------------------------------------------------------
-
 def renderizar(scene_path="utils/input/sampleScene.json"):
+    """Renderiza a cena e imprime o resultado no stdout no formato PPM.
+
+    Para cada pixel (i, j) lança um raio e testa contra todos os objetos.
+    O objeto com menor t (mais próximo da câmera) determina a cor do pixel.
+    Se nenhum objeto for atingido, o pixel fica preto (fundo).
+
+    A cor usada é a componente difusa bruta do material (kd), sem iluminação.
+    O PPM é impresso no stdout — redirecionar para arquivo gera o arquivo de imagem."""
     scene   = SceneJsonLoader.load_file(scene_path)
     largura = scene.camera.image_width
     altura  = scene.camera.image_height
@@ -101,14 +93,14 @@ def renderizar(scene_path="utils/input/sampleScene.json"):
     C, u, v, w = base_camera(scene)
     objetos     = criar_objetos(scene)
 
-    # Cabeçalho PPM (formato P3 = texto, RGB, valores 0-255)
+    # Cabeçalho PPM: tipo P3 (texto RGB), dimensões e valor máximo por canal
     linhas = [f"P3\n{largura} {altura}\n255"]
 
     for j in range(altura):
         for i in range(largura):
             raio = gerar_raio(i, j, C, u, v, w, largura, altura, d)
 
-            # Encontrar a intersecção mais próxima (menor t positivo)
+            # Busca o objeto mais próximo: menor t positivo entre todas as interseções
             t_min    = float("inf")
             material = None
 
@@ -118,13 +110,13 @@ def renderizar(scene_path="utils/input/sampleScene.json"):
                     t_min    = t
                     material = obj.material
 
-            # Cor final: cor difusa (kd) do material atingido, ou preto
+            # Converte a cor difusa de [0.0, 1.0] para [0, 255] ou usa preto no fundo
             if material is not None:
                 r = int(material.color.r * 255)
                 g = int(material.color.g * 255)
                 b = int(material.color.b * 255)
             else:
-                r = g = b = 0   # fundo preto
+                r = g = b = 0
 
             linhas.append(f"{r} {g} {b}")
 

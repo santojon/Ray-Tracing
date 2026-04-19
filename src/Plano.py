@@ -4,27 +4,34 @@ from src.Raio import Raio
 
 
 class Plano:
+    """Plano infinito definido por um ponto e uma normal, com material associado.
+    Sabe testar se um raio o acerta e retornar a distância t da interseção."""
+
     def __init__(self, ponto: Ponto, normal: Vetor, material):
+        """Cria o plano. O ponto é qualquer ponto sobre ele; a normal é normalizada
+        para garantir que os cálculos de produto escalar sejam consistentes."""
         self.ponto = ponto
         self.normal = normal.normalizar()
         self.material = material
 
     def intersectar(self, raio: Raio):
-        """
-        Plano definido por um ponto P0 e normal N: (P - P0) · N = 0
+        """Testa se o raio acerta o plano e retorna o t da interseção.
+        Retorna None se o raio for paralelo ao plano ou se a interseção
+        ficar atrás da câmera.
+
+        Derivação: todo ponto P no plano satisfaz (P - P0)·N = 0.
         Substituindo P = O + t*D:
 
-            t = ((P0 - O) · N) / (D · N)
+            (O + t*D - P0)·N = 0
+            t = ((P0 - O)·N) / (D·N)
 
-        D · N ≈ 0  → raio paralelo ao plano (sem intersecção)
-        t ≤ 0      → intersecção atrás da câmera (descartado)
-        """
+        Se D·N ≈ 0 o raio é paralelo ao plano — sem interseção válida.
+        O epsilon 1e-6 evita divisão por zero e auto-interseção."""
         denom = raio.direcao.prodEscalar(self.normal)
         if abs(denom) < 1e-6:
             return None   # raio paralelo ao plano
 
-        # (P0 - O) como Vetor
-        p0_menos_o = self.ponto - raio.origem   # Ponto - Ponto = Vetor
+        p0_menos_o = self.ponto - raio.origem   # vetor de O até P0 (Ponto - Ponto = Vetor)
         t = p0_menos_o.prodEscalar(self.normal) / denom
 
         if t > 1e-6:
