@@ -5,6 +5,7 @@ from src.Vetor import Vetor
 from src.Raio import Raio
 from src.Esfera import Esfera
 from src.Plano import Plano
+from src.Malha import Malha
 from utils.Scene.sceneParser import SceneJsonLoader
 
 
@@ -72,6 +73,10 @@ def criar_objetos(scene):
             ponto  = obj.get_ponto("point_on_plane")
             normal = obj.get_vetor("normal")
             objetos.append(Plano(ponto, normal, obj.material))
+
+        elif obj.obj_type == "mesh":
+            path = obj.get_property("path")
+            objetos.append(Malha(path, obj.material, obj.transforms))
 
     return objetos
 
