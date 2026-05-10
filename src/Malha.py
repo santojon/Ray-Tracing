@@ -42,6 +42,18 @@ class Malha:
                 material,
             ))
 
+        # AABB (axis-aligned bounding box) da malha no espaço do mundo.
+        # Usada como teste rápido em intersectar(): se o raio não atravessa a caixa,
+        # pula os N testes triângulo-a-triângulo.
+        if vertices_mundo:
+            xs = [p.x for p in vertices_mundo]
+            ys = [p.y for p in vertices_mundo]
+            zs = [p.z for p in vertices_mundo]
+            self.bbox_min = (min(xs), min(ys), min(zs))
+            self.bbox_max = (max(xs), max(ys), max(zs))
+        else:
+            self.bbox_min = self.bbox_max = (0.0, 0.0, 0.0)
+
     @staticmethod
     def _construir_matriz(transforms: list) -> Matriz:
         """Compõe a sequência de transformações em uma única matriz 4×4.
@@ -73,11 +85,52 @@ class Malha:
 
     def intersectar(self, raio: Raio):
         """Testa o raio contra todos os triângulos da malha.
-        Retorna o menor t positivo encontrado, ou None se não houver colisão.
-        Complexidade O(n_triangulos) — sem aceleração espacial nesta entrega."""
+        Antes do teste por triângulo, descarta o raio se ele nem atravessa a AABB
+        da malha — isso evita N testes Möller-Trumbore para a maioria dos pixels,
+        que são fundo. Retorna o menor t positivo, ou None se não houver colisão."""
+        if not self._intersecta_bbox(raio):
+            return None
+
         t_min = None
         for tri in self.triangulos:
             t = tri.intersectar(raio)
             if t is not None and (t_min is None or t < t_min):
                 t_min = t
         return t_min
+
+    def _intersecta_bbox(self, raio: Raio) -> bool:
+        """Slab test: para cada eixo, calcula o intervalo [t1, t2] em que o raio
+        está dentro do par de planos da AABB. A interseção dos três intervalos
+        (eixos X, Y, Z) só é não-vazia se o raio realmente atravessa a caixa."""
+        EPS = 1e-12
+        origem_xyz  = (raio.origem.x,  raio.origem.y,  raio.origem.z)
+        direcao_xyz = (raio.direcao.x, raio.direcao.y, raio.direcao.z)
+
+        tmin = float("-inf")
+        tmax = float("inf")
+
+        for axis in range(3):
+            o = origem_xyz[axis]
+            d = direcao_xyz[axis]
+            bmin = self.bbox_min[axis]
+            bmax = self.bbox_max[axis]
+
+            if abs(d) < EPS:
+                # Raio paralelo a esse par de planos: só passa se a origem já está dentro
+                if o < bmin or o > bmax:
+                    return False
+                continue
+
+            t1 = (bmin - o) / d
+            t2 = (bmax - o) / d
+            if t1 > t2:
+                t1, t2 = t2, t1
+            if t1 > tmin:
+                tmin = t1
+            if t2 < tmax:
+                tmax = t2
+            if tmin > tmax:
+                return False
+
+        # tmax >= 0 garante que a caixa não está inteiramente atrás do raio
+        return tmax >= 0

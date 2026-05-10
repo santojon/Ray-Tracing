@@ -101,7 +101,12 @@ def renderizar(scene_path="utils/input/sampleScene.json"):
     # Cabeçalho PPM: tipo P3 (texto RGB), dimensões e valor máximo por canal
     linhas = [f"P3\n{largura} {altura}\n255"]
 
+    print(f"Renderizando {largura}x{altura} ({len(objetos)} objetos)...", file=sys.stderr)
+
     for j in range(altura):
+        if j % 10 == 0 or j == altura - 1:
+            pct = (j + 1) * 100 // altura
+            print(f"  linha {j + 1}/{altura} ({pct}%)", file=sys.stderr)
         for i in range(largura):
             raio = gerar_raio(i, j, C, u, v, w, largura, altura, d)
 
