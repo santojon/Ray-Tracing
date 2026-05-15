@@ -1,5 +1,6 @@
 from src.Ponto import Ponto
 from src.Raio import Raio
+from src.HitInfo import HitInfo
 
 
 class Triangulo:
@@ -8,11 +9,16 @@ class Triangulo:
 
     def __init__(self, p0: Ponto, p1: Ponto, p2: Ponto, material):
         """Cria o triângulo com os três vértices já no espaço do mundo
-        (após aplicar as transformações da malha) e o material associado."""
+        (após aplicar as transformações da malha) e o material associado.
+        Pré-computa edge1, edge2 e a normal (constante por triângulo)."""
         self.p0 = p0
         self.p1 = p1
         self.p2 = p2
         self.material = material
+
+        self.edge1 = p1 - p0
+        self.edge2 = p2 - p0
+        self.normal = self.edge1.prodVetorial(self.edge2).normalizar()
 
     def intersectar(self, raio: Raio):
         """Algoritmo de Möller-Trumbore: interseção raio-triângulo em O(1).
@@ -35,8 +41,8 @@ class Triangulo:
 
         Rejeita: raio paralelo, u<0, u>1, v<0, u+v>1, t≤0 (atrás da câmera).
         """
-        edge1 = self.p1 - self.p0   # Ponto - Ponto = Vetor
-        edge2 = self.p2 - self.p0
+        edge1 = self.edge1
+        edge2 = self.edge2
 
         h = raio.direcao.prodVetorial(edge2)
         a = edge1.prodEscalar(h)
@@ -59,6 +65,10 @@ class Triangulo:
             return None   # fora do triângulo (coordenada V inválida)
 
         t = f * edge2.prodEscalar(q)
-        if t > EPS:
-            return t
-        return None   # interseção atrás da câmera
+        if t <= EPS:
+            return None   # interseção atrás da câmera
+
+        ponto  = raio.ponto_em(t)
+        # Normal sempre voltada para o lado do raio (double-sided shading)
+        normal = self.normal if raio.direcao.prodEscalar(self.normal) < 0 else -self.normal
+        return HitInfo(t, ponto, normal, self.material)

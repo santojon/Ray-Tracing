@@ -1,6 +1,7 @@
 from src.Ponto import Ponto
 from src.Vetor import Vetor
 from src.Raio import Raio
+from src.HitInfo import HitInfo
 
 
 class Plano:
@@ -15,7 +16,7 @@ class Plano:
         self.material = material
 
     def intersectar(self, raio: Raio):
-        """Testa se o raio acerta o plano e retorna o t da interseção.
+        """Testa se o raio acerta o plano e retorna HitInfo da interseção.
         Retorna None se o raio for paralelo ao plano ou se a interseção
         ficar atrás da câmera.
 
@@ -34,6 +35,10 @@ class Plano:
         p0_menos_o = self.ponto - raio.origem   # vetor de O até P0 (Ponto - Ponto = Vetor)
         t = p0_menos_o.prodEscalar(self.normal) / denom
 
-        if t > 1e-6:
-            return t
-        return None
+        if t <= 1e-6:
+            return None
+
+        ponto  = raio.ponto_em(t)
+        # Normal sempre voltada para o lado do raio (planos são bidirecionais)
+        normal = self.normal if denom < 0 else -self.normal
+        return HitInfo(t, ponto, normal, self.material)

@@ -1,6 +1,7 @@
 import math
 from src.Ponto import Ponto
 from src.Raio import Raio
+from src.HitInfo import HitInfo
 
 
 class Esfera:
@@ -14,7 +15,7 @@ class Esfera:
         self.material = material
 
     def intersectar(self, raio: Raio):
-        """Testa se o raio acerta a esfera e retorna o t da interseção mais próxima.
+        """Testa se o raio acerta a esfera e retorna HitInfo da interseção mais próxima.
         Retorna None se não houver colisão.
 
         Derivação: substituindo P = O + t*D na equação da esfera |P - C|² = r²
@@ -46,8 +47,19 @@ class Esfera:
         t2 = (-b + raiz) / (2 * a)   # interseção mais distante (saída)
 
         EPS = 1e-6
+        t = None
         if t1 > EPS:
-            return t1
-        if t2 > EPS:
-            return t2
-        return None
+            t = t1
+        elif t2 > EPS:
+            t = t2
+        else:
+            return None
+
+        ponto  = raio.ponto_em(t)
+        # Normal aponta de C para o ponto na superfície (P - C) normalizada
+        normal = (ponto - self.centro).normalizar()
+        # Se o raio atinge o interior da esfera (origem dentro), inverte para a normal
+        # ficar voltada ao raio
+        if raio.direcao.prodEscalar(normal) > 0:
+            normal = -normal
+        return HitInfo(t, ponto, normal, self.material)
