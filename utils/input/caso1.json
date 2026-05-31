@@ -1,66 +1,120 @@
 {
-  "globalLight": [0.1, 0.1, 0.1],
-
-  "materials": {
-    "chao": {
-      "color": [0.2, 0.5, 0.8],
-      "ka": [0.2, 0.5, 0.8],
-      "ks": [0.0, 0.0, 0.0],
-      "ns": 10
-    },
-    "cubo_azul": {
-      "color": [0.2, 0.4, 0.9]
-    },
-    "macaco_laranja": {
-      "color": [0.85, 0.45, 0.1]
-    }
-  },
+  "globalLight": [0.01, 0.01, 0.01],
 
   "camera": {
-    "lookfrom": [0, 12, 15],
-    "lookat":   [0, 12, 0],
-    "upVector": [0, 1, 0],
-    "image_width": 600,
-    "image_height": 600,
-    "screen_distance": 1.0
+    "lookfrom": [10.0, 5.0, 15.0],
+    "lookat": [0.0, 0.0, 0.0],
+    "upVector": [0.0, 1.0, 0.0],
+    "image_width": 700,
+    "image_height": 700,
+    "screen_distance": 1.5
   },
 
   "lights": [
     {
-      "name": "Luz principal",
-      "position": [10, 25, 15],
-      "color": [1.0, 1.0, 1.0]
+      "name": "Luz Vermelha",
+      "position": [20.0, 3.0, 20.0],
+      "color": [0.7, 0.0, 0.0]
+    },
+    {
+      "name": "Luz Verde",
+      "position": [20.0, 3.0, -20.0],
+      "color": [0.0, 0.7, 0.0]
+    },
+    {
+      "name": "Luz Azul",
+      "position": [-20.0, 3.0, 20.0],
+      "color": [0.0, 0.0, 0.7]
+    },
+    {
+      "name": "Luz Pos (Atenuada)",
+      "position": [5.0, 10.0, 13.0],
+      "color": [0.075, 0.075, 0.075]
     }
   ],
 
+  "materials": {
+    "mat_plano_chao": {
+      "color": [0.3, 0.8, 0.4],
+      "ka": [0.3, 0.8, 0.4],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
+    },
+    "mat_cubo_padrao": {
+      "color": [0.7, 0.7, 0.7],
+      "ka": [0.7, 0.7, 0.7],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
+    },
+    "mat_esfera_azul": {
+      "color": [0.1, 0.2, 0.9],
+      "ka": [0.1, 0.2, 0.9],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
+    },
+    "mat_esfera_verde_agua": {
+      "color": [0.4, 0.8, 0.6],
+      "ka": [0.4, 0.8, 0.6],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
+    },
+    "mat_macaco_sensivel": {
+      "color": [1.0, 1.0, 1.0],
+      "ka": [0.5, 0.5, 0.5],
+      "ks": [1.0, 1.0, 1.0],
+      "ns": 8
+    }
+  },
+
   "objects": [
     {
+      "name": "Plano Chão",
       "type": "plane",
-      "point_on_plane": [0, 0, 0],
-      "normal": [0, 1, 0],
-      "material": "chao"
+      "point_on_plane": [0.0, -7.0, 0.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "mat_plano_chao"
     },
     {
+      "name": "Cubo 1",
       "type": "mesh",
-      "relativePos": [0.0000, 5.0000, 0.0000],
       "path": "utils/input/cubo.obj",
-      "material": "cubo_azul",
+      "material": "mat_cubo_padrao",
+      "transform": []
+    },
+    {
+      "name": "Cubo 2",
+      "type": "mesh",
+      "path": "utils/input/cubo.obj",
+      "material": "mat_cubo_padrao",
       "transform": [
-          { "type": "scaling", "factors": [3, 3, 3] },
-          { "type": "rotation", "angle": [0, 0, 0] },
-          { "type": "translation", "vector": [0, 20, 0] }
+        { "type": "translation", "vector": [0.0, 5.0, 0.0] }
       ]
     },
     {
+      "name": "Macaco (Suzanne)",
       "type": "mesh",
-      "relativePos": [0.0000, 5.0000, 0.0000],
-      "path": "utils/input/macaco.obj",
-      "material": "macaco_laranja",
+      "path": "utils/input/monkey.obj",
+      "material": "mat_macaco_sensivel",
       "transform": [
-          { "type": "scaling", "factors": [5, 5, 5] },
-          { "type": "rotation", "angle": [0, 0, 0] },
-          { "type": "translation", "vector": [0, 10, 0] }
+        { "type": "scaling", "factors": [2.0, 1.0, 1.0] },
+        { "type": "translation", "vector": [0.0, -3.0, 4.0] }
       ]
+    },
+    {
+      "name": "Esfera Azul",
+      "type": "sphere",
+
+      "center": [-3.0, 2.0, 3.0],
+      "radius": 0.75,
+      "material": "mat_esfera_azul"
+    },
+    {
+      "name": "Esfera Verde Água",
+      "type": "sphere",
+    
+      "center": [-2.5, -5.0, -3.55],
+      "radius": 1.0,
+      "material": "mat_esfera_verde_agua"
     }
   ]
 }

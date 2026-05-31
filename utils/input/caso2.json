@@ -1,66 +1,44 @@
 {
-  "globalLight": [0.1, 0.1, 0.1],
+  "globalLight": [0.2, 0.2, 0.2],
+
+  "camera": {
+    "lookfrom": [10.0, 5.0, 15.0],
+    "lookat": [0.0, 0.0, 0.0],
+    "upVector": [0.0, 1.0, 0.0],
+    "image_width": 700,
+    "image_height": 700,
+    "screen_distance": 1.5
+  },
+
+  "lights": [],
 
   "materials": {
-    "chao": {
-      "color": [0.2, 0.5, 0.8],
-      "ka": [0.2, 0.5, 0.8],
+    "mat_plano": {
+      "color": [0.3, 0.8, 0.4],
+      "ka": [0.3, 0.8, 0.4],
       "ks": [0.0, 0.0, 0.0],
       "ns": 10
     },
-    "cubo_azul": {
-      "color": [0.2, 0.4, 0.9]
-    },
-    "macaco_laranja": {
-      "color": [0.85, 0.45, 0.1]
+    "mat_esfera": {
+      "color": [1.0, 0.0, 0.0],
+      "ka": [1.0, 0.0, 0.0],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
     }
   },
-
-  "camera": {
-    "lookfrom": [0, 10, 30],
-    "lookat":   [0, 10, 0],
-    "upVector": [0, 1, 0],
-    "image_width": 600,
-    "image_height": 600,
-    "screen_distance": 1.0
-  },
-
-  "lights": [
-    {
-      "name": "Luz principal",
-      "position": [20, 30, 25],
-      "color": [1.0, 1.0, 1.0]
-    }
-  ],
 
   "objects": [
     {
       "type": "plane",
-      "point_on_plane": [0, 0, 0],
-      "normal": [0, 1, 0],
-      "material": "chao"
+      "point_on_plane": [0.0, -7.0, 0.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "mat_plano"
     },
     {
-      "type": "mesh",
-      "relativePos": [0.0000, 5.0000, 0.0000],
-      "path": "utils/input/cubo.obj",
-      "material": "cubo_azul",
-      "transform": [
-          { "type": "scaling", "factors": [10, 10, 10] },
-          { "type": "rotation", "angle": [0, 0, 0] },
-          { "type": "translation", "vector": [0, 10, 0] }
-      ]
-    },
-    {
-      "type": "mesh",
-      "relativePos": [0.0000, 5.0000, 0.0000],
-      "path": "utils/input/macaco.obj",
-      "material": "macaco_laranja",
-      "transform": [
-          { "type": "scaling", "factors": [5, 5, 5] },
-          { "type": "rotation", "angle": [0, 0, 0] },
-          { "type": "translation", "vector": [0, 10, 0] }
-      ]
+      "type": "sphere",
+      "center": [0.0, 0.0, 0.0],
+      "radius": 2.0,
+      "material": "mat_esfera"
     }
   ]
 }

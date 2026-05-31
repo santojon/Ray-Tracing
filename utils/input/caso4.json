@@ -1,0 +1,109 @@
+{
+  "globalLight": [0.135, 0.135, 0.14],
+
+  "camera": {
+    "lookfrom": [0.0, 4.6, 10.0],
+    "lookat": [0.0, -0.1, 0.0],
+    "upVector": [0.0, 1.0, 0.0],
+    "image_width": 900,
+    "image_height": 500,
+    "screen_distance": 0.9
+  },
+
+  "lights": [
+    {
+      "name": "Luz Branca Especular",
+      "position": [0.0, 3.0, -2.8],
+      "color": [1.0, 1.0, 1.0]
+    },
+    {
+      "name": "Luz Branca",
+      "position": [0.0, 20.0, 10.0],
+      "color": [0.2, 0.2, 0.2]
+    }
+  ],
+
+  "materials": {
+    "mat_plano_escuro": {
+      "color": [0.18, 0.21, 0.24],
+      "ka": [0.02, 0.025, 0.03],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 10
+    },
+    "mat_opalescente": {
+      "color": [0.82, 0.48, 0.74],
+      "ka": [0.05, 0.03, 0.045],
+      "ks": [0.0, 0.0, 1.0],
+      "ns": 180
+    },
+    "mat_ambiente_diferente": {
+      "color": [0.18, 0.48, 0.78],
+      "ka": [0.22, 0.08, 0.025],
+      "ks": [0.65, 0.65, 0.65],
+      "ns": 80
+    },
+    "mat_rough_alta": {
+      "color": [0.78, 0.72, 0.62],
+      "ka": [0.08, 0.075, 0.065],
+      "ks": [0.65, 0.65, 0.65],
+      "ns": 8
+    },
+    "mat_rough_media": {
+      "color": [0.78, 0.72, 0.62],
+      "ka": [0.08, 0.075, 0.065],
+      "ks": [0.65, 0.65, 0.65],
+      "ns": 64
+    },
+    "mat_rough_baixa": {
+      "color": [0.78, 0.72, 0.62],
+      "ka": [0.08, 0.075, 0.065],
+      "ks": [0.65, 0.65, 0.65],
+      "ns": 512
+    }
+  },
+
+  "objects": [
+    {
+      "name": "Plano de apoio escuro",
+      "type": "plane",
+      "point_on_plane": [0.0, -1.25, 0.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "mat_plano_escuro"
+    },
+    {
+      "name": "Esfera opalescente - ks ciano",
+      "type": "sphere",
+      "center": [-4.8, 0.0, 0.0],
+      "radius": 1.15,
+      "material": "mat_opalescente"
+    },
+    {
+      "name": "Esfera ambiente quente",
+      "type": "sphere",
+      "center": [-2.4, 0.0, 0.0],
+      "radius": 1.15,
+      "material": "mat_ambiente_diferente"
+    },
+    {
+      "name": "Esfera roughness alta - ns baixo",
+      "type": "sphere",
+      "center": [0.0, 0.0, 0.0],
+      "radius": 1.15,
+      "material": "mat_rough_alta"
+    },
+    {
+      "name": "Esfera roughness media",
+      "type": "sphere",
+      "center": [2.4, 0.0, 0.0],
+      "radius": 1.15,
+      "material": "mat_rough_media"
+    },
+    {
+      "name": "Esfera roughness baixa - ns alto",
+      "type": "sphere",
+      "center": [4.8, 0.0, 0.0],
+      "radius": 1.15,
+      "material": "mat_rough_baixa"
+    }
+  ]
+}

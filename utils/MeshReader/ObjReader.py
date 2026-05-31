@@ -76,7 +76,11 @@ class ObjReader:
         prefix, *rest = parts
 
         if prefix == "mtllib" and rest:
-            mtl_path = obj_path.with_suffix(".mtl")
+            # Usa o arquivo .mtl referenciado pela diretiva (rest[0]), resolvido
+            # relativo ao diretório do .obj. Antes derivava o nome do próprio .obj
+            # (obj_path.with_suffix), o que carregava o .mtl errado quando o .obj
+            # referencia um .mtl com nome diferente (ex.: monkey.obj -> macaco.mtl).
+            mtl_path = obj_path.parent / rest[0]
             self._cmap = Colormap(str(mtl_path))
 
         elif prefix == "usemtl" and rest:
