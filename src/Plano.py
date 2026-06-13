@@ -39,6 +39,8 @@ class Plano:
             return None
 
         ponto  = raio.ponto_em(t)
-        # Normal sempre voltada para o lado do raio (planos são bidirecionais)
-        normal = self.normal if denom < 0 else -self.normal
-        return HitInfo(t, ponto, normal, self.material)
+        # Normal sempre voltada para o lado do raio (planos são bidirecionais).
+        # front_face=True quando o raio bate na "frente" do plano (denom < 0).
+        front_face = denom < 0
+        normal = self.normal if front_face else -self.normal
+        return HitInfo(t, ponto, normal, self.material, front_face)

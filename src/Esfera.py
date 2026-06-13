@@ -59,7 +59,9 @@ class Esfera:
         # Normal aponta de C para o ponto na superfície (P - C) normalizada
         normal = (ponto - self.centro).normalizar()
         # Se o raio atinge o interior da esfera (origem dentro), inverte para a normal
-        # ficar voltada ao raio
-        if raio.direcao.prodEscalar(normal) > 0:
+        # ficar voltada ao raio. front_face=False indica que o raio está saindo da
+        # esfera (relevante para a refração da entrega 4).
+        front_face = raio.direcao.prodEscalar(normal) < 0
+        if not front_face:
             normal = -normal
-        return HitInfo(t, ponto, normal, self.material)
+        return HitInfo(t, ponto, normal, self.material, front_face)

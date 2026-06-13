@@ -69,6 +69,8 @@ class Triangulo:
             return None   # interseção atrás da câmera
 
         ponto  = raio.ponto_em(t)
-        # Normal sempre voltada para o lado do raio (double-sided shading)
-        normal = self.normal if raio.direcao.prodEscalar(self.normal) < 0 else -self.normal
-        return HitInfo(t, ponto, normal, self.material)
+        # Normal sempre voltada para o lado do raio (double-sided shading).
+        # front_face=True quando o raio bate na face cuja normal aponta para ele.
+        front_face = raio.direcao.prodEscalar(self.normal) < 0
+        normal = self.normal if front_face else -self.normal
+        return HitInfo(t, ponto, normal, self.material, front_face)

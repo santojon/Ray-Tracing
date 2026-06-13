@@ -1,0 +1,115 @@
+{
+  "globalLight": [0.08, 0.08, 0.08],
+
+  "camera": {
+    "lookfrom": [0.0, 2.5, 9.0],
+    "lookat": [0.0, 0.0, 0.0],
+    "upVector": [0.0, 1.0, 0.0],
+    "image_width": 800,
+    "image_height": 500,
+    "screen_distance": 1.5
+  },
+
+  "lights": [
+    {
+      "name": "Luz principal",
+      "position": [4.0, 8.0, 6.0],
+      "color": [0.9, 0.9, 0.9]
+    },
+    {
+      "name": "Luz de preenchimento",
+      "position": [-6.0, 4.0, 6.0],
+      "color": [0.25, 0.25, 0.3]
+    }
+  ],
+
+  "materials": {
+    "chao_xadrez": {
+      "color": [0.35, 0.35, 0.38],
+      "ka": [0.1, 0.1, 0.12],
+      "ks": [0.2, 0.2, 0.2],
+      "ns": 32,
+      "kr": [0.25, 0.25, 0.25]
+    },
+    "parede_fundo": {
+      "color": [0.18, 0.28, 0.42],
+      "ka": [0.05, 0.08, 0.12],
+      "ks": [0.0, 0.0, 0.0],
+      "ns": 8
+    },
+    "espelho": {
+      "color": [0.0, 0.0, 0.0],
+      "ka": [0.0, 0.0, 0.0],
+      "ks": [0.4, 0.4, 0.4],
+      "ns": 1024,
+      "kr": [0.9, 0.9, 0.9]
+    },
+    "vidro": {
+      "color": [0.0, 0.0, 0.0],
+      "ka": [0.0, 0.0, 0.0],
+      "ks": [0.3, 0.3, 0.3],
+      "ns": 512,
+      "kr": [0.08, 0.08, 0.08],
+      "kt": [0.92, 0.92, 0.92],
+      "ni": 1.5,
+      "d": 0.1
+    },
+    "bola_vermelha": {
+      "color": [0.85, 0.1, 0.1],
+      "ka": [0.2, 0.03, 0.03],
+      "ks": [0.5, 0.5, 0.5],
+      "ns": 64
+    },
+    "bola_amarela": {
+      "color": [0.9, 0.8, 0.15],
+      "ka": [0.25, 0.22, 0.04],
+      "ks": [0.5, 0.5, 0.5],
+      "ns": 64
+    }
+  },
+
+  "objects": [
+    {
+      "name": "Chao reflexivo",
+      "type": "plane",
+      "point_on_plane": [0.0, -1.5, 0.0],
+      "normal": [0.0, 1.0, 0.0],
+      "material": "chao_xadrez"
+    },
+    {
+      "name": "Parede de fundo",
+      "type": "plane",
+      "point_on_plane": [0.0, 0.0, -5.0],
+      "normal": [0.0, 0.0, 1.0],
+      "material": "parede_fundo"
+    },
+    {
+      "name": "Esfera espelho",
+      "type": "sphere",
+      "center": [-2.3, 0.0, -0.5],
+      "radius": 1.5,
+      "material": "espelho"
+    },
+    {
+      "name": "Esfera de vidro",
+      "type": "sphere",
+      "center": [2.3, -0.3, 1.2],
+      "radius": 1.2,
+      "material": "vidro"
+    },
+    {
+      "name": "Esfera vermelha (atras do vidro)",
+      "type": "sphere",
+      "center": [2.3, -0.3, -2.5],
+      "radius": 1.0,
+      "material": "bola_vermelha"
+    },
+    {
+      "name": "Esfera amarela",
+      "type": "sphere",
+      "center": [0.0, -0.7, 1.5],
+      "radius": 0.8,
+      "material": "bola_amarela"
+    }
+  ]
+}

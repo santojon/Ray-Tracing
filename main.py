@@ -1,3 +1,4 @@
+import math
 import sys
 
 from src.Ponto import Ponto
@@ -12,6 +13,12 @@ from utils.Scene.sceneParser import SceneJsonLoader
 # Pequeno deslocamento usado para afastar raios secundários da superfície de origem
 # e evitar auto-interseção causada por imprecisão de ponto flutuante.
 SHADOW_EPS = 1e-4
+
+# Profundidade máxima da recursão de reflexão/refração (entrega 4). Cada raio
+# secundário (refletido ou refratado) pode gerar novos raios secundários; sem
+# esse limite, duas superfícies espelhadas frente a frente recursionariam para
+# sempre. 5 é suficiente para reflexões e travessias de vidro convincentes.
+MAX_DEPTH = 5
 
 
 def base_camera(data):
@@ -131,7 +138,9 @@ def phong(hit, raio, scene, objetos):
     - para cada luz visível (não bloqueada por sombra):
         - difuso:    kd * max(0, L·N) * IL
         - especular: ks * max(0, R·V)^η * IL
-    A reflexão e refração (kr·Ir, kt·It) ficam para a entrega 4.
+    Esta função calcula apenas a iluminação LOCAL. Os termos de reflexão e
+    refração (kr·Ir, kt·It) são somados por tracar() (entrega 4), que chama phong
+    como o termo de base de cada nível da recursão.
 
     Vetores (todos normalizados):
         N — normal da superfície em P (vem do HitInfo)
@@ -185,6 +194,99 @@ def phong(hit, raio, scene, objetos):
     return r, g, b
 
 
+def _tem_cor(c) -> bool:
+    """True se o coeficiente de cor (kr ou kt) tem alguma componente não nula —
+    ou seja, vale a pena lançar o raio secundário correspondente."""
+    return c.r != 0.0 or c.g != 0.0 or c.b != 0.0
+
+
+def refletir(D: Vetor, N: Vetor) -> Vetor:
+    """Reflete a direção incidente D em torno da normal N (ambas normalizadas).
+
+    Fórmula clássica de reflexão especular:  R = D - 2*(D·N)*N
+
+    Como N vem do HitInfo já orientada contra o raio (D·N < 0), o raio refletido
+    R sai da superfície pelo mesmo lado de onde o raio chegou."""
+    return D - N * (2.0 * D.prodEscalar(N))
+
+
+def refratar(D: Vetor, N: Vetor, n1: float, n2: float):
+    """Direção do raio refratado pela lei de Snell, ou None em reflexão interna total.
+
+    D  — direção incidente (normalizada)
+    N  — normal orientada contra D (D·N < 0)
+    n1 — índice de refração do meio de onde o raio vem
+    n2 — índice de refração do meio para onde o raio entra
+
+    Snell em forma vetorial:  T = n*D + (n*cosθi - cosθt)*N,  com n = n1/n2.
+    Se n²·(1 - cos²θi) > 1, o ângulo crítico foi ultrapassado → reflexão interna
+    total (não há raio transmitido) → retorna None."""
+    n = n1 / n2
+    cos_i = -D.prodEscalar(N)               # > 0, pois N está contra D
+    sin2_t = n * n * (1.0 - cos_i * cos_i)
+    if sin2_t > 1.0:
+        return None                         # reflexão interna total
+    cos_t = math.sqrt(1.0 - sin2_t)
+    return D * n + N * (n * cos_i - cos_t)
+
+
+def tracar(raio: Raio, scene, objetos, profundidade: int):
+    """Ray tracing recursivo: cor que o 'raio' enxerga na cena.
+
+    1. Acha o objeto mais próximo. Se não houver, devolve o fundo (preto).
+    2. Calcula a cor local pelo modelo de Phong (ambiente + difuso + especular).
+    3. Se ainda há orçamento de recursão e o material é reflexivo (kr > 0),
+       lança um raio refletido e soma  kr · I_r.
+    4. Se o material é transparente (kt > 0), lança um raio refratado (lei de
+       Snell, usando material.ni) e soma  kt · I_t.
+
+    Isso completa a equação da entrega 3 com os dois termos que faltavam:
+        I = Phong  +  k_r · I_r  +  k_t · I_t
+    """
+    hit = encontrar_hit_mais_proximo(raio, objetos)
+    if hit is None:
+        return (0.0, 0.0, 0.0)
+
+    r, g, b = phong(hit, raio, scene, objetos)
+
+    # Parou no limite de recursão: devolve só a cor local.
+    if profundidade >= MAX_DEPTH:
+        return r, g, b
+
+    mat = hit.material
+    N   = hit.normal
+    D   = raio.direcao
+
+    # --- Reflexão: k_r · I_r ---
+    if _tem_cor(mat.kr):
+        R = refletir(D, N).normalizar()
+        origem = hit.point + N * SHADOW_EPS       # desloca para fora da superfície
+        rr, rg, rb = tracar(Raio(origem, R), scene, objetos, profundidade + 1)
+        r += mat.kr.r * rr
+        g += mat.kr.g * rg
+        b += mat.kr.b * rb
+
+    # --- Refração: k_t · I_t ---
+    if _tem_cor(mat.kt):
+        # front_face decide o sentido da travessia: ar→material na entrada,
+        # material→ar na saída. Ar tem índice 1.0.
+        if hit.front_face:
+            n1, n2 = 1.0, mat.ni
+        else:
+            n1, n2 = mat.ni, 1.0
+
+        T = refratar(D, N, n1, n2)
+        if T is not None:                          # None = reflexão interna total
+            T = T.normalizar()
+            origem = hit.point - N * SHADOW_EPS     # desloca para dentro da superfície
+            tr, tg, tb = tracar(Raio(origem, T), scene, objetos, profundidade + 1)
+            r += mat.kt.r * tr
+            g += mat.kt.g * tg
+            b += mat.kt.b * tb
+
+    return r, g, b
+
+
 def _to_byte(c: float) -> int:
     """Converte cor float em [0, ∞) para byte [0, 255], aplicando clamp."""
     if c <= 0.0:
@@ -197,9 +299,9 @@ def _to_byte(c: float) -> int:
 def renderizar(scene_path="utils/input/sampleScene.json"):
     """Renderiza a cena e imprime o resultado no stdout no formato PPM.
 
-    Para cada pixel (i, j) lança um raio e testa contra todos os objetos.
-    O objeto com menor t (mais próximo da câmera) determina o HitInfo.
-    A cor do pixel é calculada pelo modelo de iluminação de Phong com sombras.
+    Para cada pixel (i, j) lança um raio primário e chama tracar(), que faz o
+    ray tracing recursivo: iluminação de Phong com sombras no ponto atingido,
+    mais os raios secundários de reflexão (kr) e refração (kt) até MAX_DEPTH.
     Se nenhum objeto for atingido, o pixel fica preto (fundo).
 
     O PPM é impresso no stdout — redirecionar para arquivo gera o arquivo de imagem."""
@@ -223,13 +325,10 @@ def renderizar(scene_path="utils/input/sampleScene.json"):
             print(f"  linha {j + 1}/{altura} ({pct}%)", file=sys.stderr)
         for i in range(largura):
             raio = gerar_raio(i, j, C, u, v, w, largura, altura, d)
-            hit  = encontrar_hit_mais_proximo(raio, objetos)
-
-            if hit is not None:
-                r, g, b = phong(hit, raio, scene, objetos)
-                linhas.append(f"{_to_byte(r)} {_to_byte(g)} {_to_byte(b)}")
-            else:
-                linhas.append("0 0 0")
+            # Raio primário com profundidade 0; tracar() cuida da recursão de
+            # reflexão/refração e devolve a cor já somada (Phong + k_r·I_r + k_t·I_t).
+            r, g, b = tracar(raio, scene, objetos, 0)
+            linhas.append(f"{_to_byte(r)} {_to_byte(g)} {_to_byte(b)}")
 
     sys.stdout.write("\n".join(linhas) + "\n")
 
